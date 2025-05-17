@@ -27,12 +27,14 @@ import com.loohp.imageframe.ImageFrame;
 import com.loohp.imageframe.api.events.ImageMapUpdatedEvent;
 import com.loohp.imageframe.utils.FutureUtils;
 import com.loohp.imageframe.utils.GifReader;
+import com.loohp.imageframe.utils.Mp4Reader;
 import com.loohp.imageframe.utils.HTTPRequestUtils;
 import com.loohp.imageframe.utils.MapUtils;
 import com.loohp.platformscheduler.Scheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.SoundCategory;
 import org.bukkit.map.MapCursor;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
@@ -80,7 +82,7 @@ public class URLAnimatedImageMap extends URLImageMap {
             mapViews.add(mapView);
             mapIds.add(mapView.getId());
         }
-        URLAnimatedImageMap map = new URLAnimatedImageMap(manager, -1, name, url, new FileLazyMappedBufferedImage[mapsCount][], mapViews, mapIds, markers, width, height, ditheringType, creator, Collections.emptyMap(), System.currentTimeMillis(), -1, 0);
+        URLAnimatedImageMap map = new URLAnimatedImageMap(manager, -1, name, url, new FileLazyMappedBufferedImage[mapsCount][], mapViews, mapIds, markers, width, height, ditheringType, creator, Collections.emptyMap(), System.currentTimeMillis(), -1, 0, null);
         return FutureUtils.callAsyncMethod(() -> {
             FutureUtils.callSyncMethod(() -> {
                 for (int i = 0; i < mapViews.size(); i++) {
@@ -157,7 +159,8 @@ public class URLAnimatedImageMap extends URLImageMap {
         }
         int pausedAt = json.has("pausedAt") ? json.get("pausedAt").getAsInt() : -1;
         int tickOffset = json.has("tickOffset") ? json.get("tickOffset").getAsInt() : 0;
-        URLAnimatedImageMap map = new URLAnimatedImageMap(manager, imageIndex, name, url, cachedImages, mapViews, mapIds, markers, width, height, ditheringType, creator, hasAccess, creationTime, pausedAt, tickOffset);
+        String soundKey = json.has("soundKey") ? json.get("soundKey").getAsString() : null;
+        URLAnimatedImageMap map = new URLAnimatedImageMap(manager, imageIndex, name, url, cachedImages, mapViews, mapIds, markers, width, height, ditheringType, creator, hasAccess, creationTime, pausedAt, tickOffset, soundKey);
         return FutureUtils.callSyncMethod(() -> {
             for (int u = 0; u < mapViews.size(); u++) {
                 MapView mapView = mapViews.get(u);
@@ -177,12 +180,14 @@ public class URLAnimatedImageMap extends URLImageMap {
     protected Set<Integer> fakeMapIdsSet;
     protected int pausedAt;
     protected int tickOffset;
+    protected String soundKey;
 
-    protected URLAnimatedImageMap(ImageMapManager manager, int imageIndex, String name, String url, FileLazyMappedBufferedImage[][] cachedImages, List<MapView> mapViews, List<Integer> mapIds, List<Map<String, MapCursor>> mapMarkers, int width, int height, DitheringType ditheringType, UUID creator, Map<UUID, ImageMapAccessPermissionType> hasAccess, long creationTime, int pausedAt, int tickOffset) {
+    protected URLAnimatedImageMap(ImageMapManager manager, int imageIndex, String name, String url, FileLazyMappedBufferedImage[][] cachedImages, List<MapView> mapViews, List<Integer> mapIds, List<Map<String, MapCursor>> mapMarkers, int width, int height, DitheringType ditheringType, UUID creator, Map<UUID, ImageMapAccessPermissionType> hasAccess, long creationTime, int pausedAt, int tickOffset, String soundKey) {
         super(manager, imageIndex, name, url, mapViews, mapIds, mapMarkers, width, height, ditheringType, creator, hasAccess, creationTime);
         this.cachedImages = cachedImages;
         this.pausedAt = pausedAt;
         this.tickOffset = tickOffset;
+        this.soundKey = soundKey;
         this.cacheControlTask.loadCacheIfManual();
     }
 
@@ -262,7 +267,15 @@ public class URLAnimatedImageMap extends URLImageMap {
         try {
             frames = GifReader.readGif(HTTPRequestUtils.getInputStream(url), ImageFrame.maxImageFileSize).get();
         } catch (Exception e) {
-            throw new RuntimeException("Unable to read or download animated gif, does this url directly links to the gif? (" + url + ")", e);
+            try {
+                frames = Mp4Reader.readMp4(HTTPRequestUtils.getInputStream(url), ImageFrame.maxImageFileSize);
+                byte[] audio = Mp4Reader.extractAudioOgg(HTTPRequestUtils.getInputStream(url), ImageFrame.maxImageFileSize);
+                if (ImageFrame.resourcePackSoundManager != null) {
+                    soundKey = ImageFrame.resourcePackSoundManager.addSound(audio);
+                }
+            } catch (Exception ex) {
+                throw new RuntimeException("Unable to read or download animated gif/mp4 (" + url + ")", ex);
+            }
         }
         List<BufferedImage> images = new ArrayList<>();
         for (int currentTime = 0; ; currentTime += 50) {
@@ -401,6 +414,12 @@ public class URLAnimatedImageMap extends URLImageMap {
 
     @Override
     public void sendAnimationFakeMaps(Collection<? extends Player> players, MapPacketSentCallback completionCallback) {
+        if (soundKey != null && ImageFrame.resourcePackSoundManager != null) {
+            for (Player player : players) {
+                ImageFrame.resourcePackSoundManager.sendPack(player);
+                player.playSound(player.getLocation(), soundKey, SoundCategory.MASTER, 1f, 1f);
+            }
+        }
         int length = getSequenceLength();
         for (int currentTick = 0; currentTick < length; currentTick++) {
             for (int index = 0; index < fakeMapIds.length; index++) {
@@ -460,6 +479,9 @@ public class URLAnimatedImageMap extends URLImageMap {
         json.addProperty("creator", creator.toString());
         json.addProperty("pausedAt", pausedAt);
         json.addProperty("tickOffset", tickOffset);
+        if (soundKey != null) {
+            json.addProperty("soundKey", soundKey);
+        }
         JsonObject accessJson = new JsonObject();
         for (Map.Entry<UUID, ImageMapAccessPermissionType> entry : accessControl.getPermissions().entrySet()) {
             accessJson.addProperty(entry.getKey().toString(), entry.getValue().name());
