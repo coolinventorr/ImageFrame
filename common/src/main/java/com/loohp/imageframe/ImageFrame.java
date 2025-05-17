@@ -44,6 +44,7 @@ import com.loohp.imageframe.objectholders.UnsetState;
 import com.loohp.imageframe.placeholderapi.Placeholders;
 import com.loohp.imageframe.updater.Updater;
 import com.loohp.imageframe.upload.ImageUploadManager;
+import com.loohp.imageframe.sound.ResourcePackSoundManager;
 import com.loohp.imageframe.utils.ChatColorUtils;
 import com.loohp.imageframe.utils.MCVersion;
 import com.loohp.imageframe.utils.ModernEventsUtils;
@@ -193,6 +194,7 @@ public class ImageFrame extends JavaPlugin {
     public static InvisibleFrameManager invisibleFrameManager;
     public static ImageMapCreationTaskManager imageMapCreationTaskManager;
     public static ImageUploadManager imageUploadManager;
+    public static ResourcePackSoundManager resourcePackSoundManager;
 
     public static boolean isURLAllowed(String link) {
         if (!restrictImageUrlEnabled) {
@@ -333,6 +335,10 @@ public class ImageFrame extends JavaPlugin {
         invisibleFrameManager = new InvisibleFrameManager();
         imageMapCreationTaskManager = new ImageMapCreationTaskManager(ImageFrame.parallelProcessingLimit);
         imageUploadManager = new ImageUploadManager(uploadServiceEnabled, uploadServiceServerAddress, uploadServiceServerPort);
+        resourcePackSoundManager = new ResourcePackSoundManager(imageUploadManager.getWebRootDir());
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            resourcePackSoundManager.applyResourcePack(player);
+        }
 
         if (isPluginEnabled("PlaceholderAPI")) {
             new Placeholders().register();
@@ -357,6 +363,12 @@ public class ImageFrame extends JavaPlugin {
         }
         if (imageUploadManager != null) {
             imageUploadManager.close();
+        }
+        if (resourcePackSoundManager != null) {
+            try {
+                resourcePackSoundManager.close();
+            } catch (Exception ignore) {
+            }
         }
         getServer().getConsoleSender().sendMessage(ChatColor.RED + "[ImageFrame] ImageFrame has been Disabled!");
     }

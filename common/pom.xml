@@ -101,6 +101,10 @@
                                     <pattern>org.apache.commons</pattern>
                                     <shadedPattern>com.loohp.imageframe.libs.org.apache.commons</shadedPattern>
                                 </relocation>
+                                <relocation>
+                                    <pattern>org.jcodec</pattern>
+                                    <shadedPattern>com.loohp.imageframe.libs.org.jcodec</shadedPattern>
+                                </relocation>
                             </relocations>
                         </configuration>
                     </execution>
@@ -317,6 +321,12 @@
             <groupId>com.madgag</groupId>
             <artifactId>animated-gif-lib</artifactId>
             <version>1.4</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jcodec</groupId>
+            <artifactId>jcodec</artifactId>
+            <version>0.2.5</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

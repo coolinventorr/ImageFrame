@@ -102,6 +102,10 @@ public class ImageUploadManager implements AutoCloseable {
         }
     }
 
+    public File getWebRootDir() {
+        return webRootDir;
+    }
+
     public PendingUpload newPendingUpload(UUID user) {
         PendingUpload existing = pendingUploads.remove(user);
         if (existing != null) {

@@ -338,6 +338,7 @@ public class AnimatedFakeMapManager implements Listener, Runnable {
             if (player.isOnline()) {
                 knownMapIds.put(player, ConcurrentHashMap.newKeySet());
                 pendingKnownMapIds.put(player, ConcurrentHashMap.newKeySet());
+                ImageFrame.resourcePackSoundManager.applyResourcePack(player);
             }
         }, 20);
     }
