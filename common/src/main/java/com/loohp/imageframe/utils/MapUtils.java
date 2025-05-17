@@ -73,6 +73,7 @@ public class MapUtils {
     public static final int MAP_WIDTH = 128;
 
     public static final String GIF_CONTENT_TYPE = "image/gif";
+    public static final String MP4_CONTENT_TYPE = "video/mp4";
     public static final List<BlockFace> CARTESIAN_BLOCK_FACES = Collections.unmodifiableList(Arrays.asList(BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN));
 
     @SuppressWarnings("removal")
