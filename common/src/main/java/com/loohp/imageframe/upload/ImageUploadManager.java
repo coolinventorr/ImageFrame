@@ -116,6 +116,10 @@ public class ImageUploadManager implements AutoCloseable {
         return imagesUploadedCounter;
     }
 
+    public File getWebRootDir() {
+        return webRootDir;
+    }
+
     public boolean wasUploaded(String url) {
         try {
             File file = Paths.get(new URL(url).toURI()).toFile();

@@ -222,7 +222,7 @@ public class Commands implements CommandExecutor, TabCompleter {
                                         String finalUrl = url;
                                         String finalImageType = imageType;
                                         creationTask = ImageFrame.imageMapCreationTaskManager.enqueue(owner, name, width, height, () -> {
-                                            if (finalImageType.equals(MapUtils.GIF_CONTENT_TYPE) && sender.hasPermission("imageframe.create.animated")) {
+                                            if ((finalImageType.equals(MapUtils.GIF_CONTENT_TYPE) || finalImageType.equals(MapUtils.MP4_CONTENT_TYPE)) && sender.hasPermission("imageframe.create.animated")) {
                                                 return URLAnimatedImageMap.create(ImageFrame.imageMapManager, name, finalUrl, width, height, ditheringType, owner).get();
                                             } else {
                                                 return URLStaticImageMap.create(ImageFrame.imageMapManager, name, finalUrl, width, height, ditheringType, owner).get();
@@ -789,7 +789,7 @@ public class Commands implements CommandExecutor, TabCompleter {
                                         sender.sendMessage(ImageFrame.messageURLRestricted);
                                         return;
                                     }
-                                    if (imageType.equals(MapUtils.GIF_CONTENT_TYPE) == urlImageMap.requiresAnimationService()) {
+                                    if ((imageType.equals(MapUtils.GIF_CONTENT_TYPE) || imageType.equals(MapUtils.MP4_CONTENT_TYPE)) == urlImageMap.requiresAnimationService()) {
                                         String oldUrl = urlImageMap.getUrl();
                                         if (url != null) {
                                             urlImageMap.setUrl(url);
