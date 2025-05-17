@@ -17,6 +17,8 @@ Plugins built against Spigot usually also work with [Paper](https://papermc.io/)
 
 - [Jenkins](https://ci.loohpjames.com/job/ImageFrame/)
 
+A `Jenkinsfile` is provided to build the plugin using Jenkins.
+
 ## Maven
 ```html
 <repository>

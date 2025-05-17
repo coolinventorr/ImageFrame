@@ -27,6 +27,7 @@ import com.loohp.imageframe.ImageFrame;
 import com.loohp.imageframe.api.events.ImageMapUpdatedEvent;
 import com.loohp.imageframe.utils.FutureUtils;
 import com.loohp.imageframe.utils.GifReader;
+import com.loohp.imageframe.utils.Mp4Reader;
 import com.loohp.imageframe.utils.HTTPRequestUtils;
 import com.loohp.imageframe.utils.MapUtils;
 import com.loohp.platformscheduler.Scheduler;
@@ -262,7 +263,11 @@ public class URLAnimatedImageMap extends URLImageMap {
         try {
             frames = GifReader.readGif(HTTPRequestUtils.getInputStream(url), ImageFrame.maxImageFileSize).get();
         } catch (Exception e) {
-            throw new RuntimeException("Unable to read or download animated gif, does this url directly links to the gif? (" + url + ")", e);
+            try {
+                frames = Mp4Reader.readMp4(HTTPRequestUtils.getInputStream(url), ImageFrame.maxImageFileSize);
+            } catch (Exception ex) {
+                throw new RuntimeException("Unable to read or download animated gif/mp4 (" + url + ")", ex);
+            }
         }
         List<BufferedImage> images = new ArrayList<>();
         for (int currentTime = 0; ; currentTime += 50) {
